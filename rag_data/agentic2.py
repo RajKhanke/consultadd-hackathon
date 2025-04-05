@@ -1,6 +1,3 @@
-# agentic_rag.py
-from __future__ import annotations
-
 import os
 import sys
 import asyncio
@@ -11,7 +8,8 @@ from pydantic import BaseModel, Field
 
 from langchain_community.vectorstores import FAISS
 from langchain_huggingface import HuggingFaceEmbeddings
-from langchain.retrievers import BM25Retriever, EnsembleRetriever
+from langchain_community.retrievers import BM25Retriever
+from langchain.retrievers import EnsembleRetriever
 from langchain.retrievers.document_compressors import CohereRerank
 from langchain.retrievers import ContextualCompressionRetriever
 from langchain.schema import Document
@@ -24,14 +22,7 @@ from pydantic_ai.providers.groq import GroqProvider
 load_dotenv()
 
 # Constants
-FAISS_INDEX_FOLDER = os.path.join(
-    os.path.expanduser("~"),
-    "OneDrive",
-    "Documents",
-    "consultadd",
-    "rag_data",
-    "faiss_indexes"
-)
+FAISS_INDEX_FOLDER = r"C:\Users\rajvk\Downloads\agents_consultadd\consultadd-hackathon\rag_data\faiss_indexes"
 MAX_CHUNKS_SUMMARY = 25  # Maximum chunks for summarization
 MAX_CHUNKS_ELIGIBILITY = 50  # Maximum chunks for eligibility checks
 RERANKING_ENABLED = False  # Set to True if you have a Cohere API key
@@ -71,67 +62,33 @@ async def retrieve_document_chunks(collection_name: str, is_summary: bool = True
     """
     Retrieve document content based on task type.
     For summary: Uses first N chunks in order.
-    
-    Args:
-        collection_name: The collection name to retrieve from.
-        is_summary: Whether this is for summarization (True) or eligibility check (False).
-        
-    Returns:
-        The document content.
     """
-    # Initialize embedding model
     embeddings = HuggingFaceEmbeddings(
         model_name="sentence-transformers/all-MiniLM-L6-v2",
         model_kwargs={'device': 'cpu'}
     )
-
-    # Load FAISS index
     index_path = os.path.join(FAISS_INDEX_FOLDER, collection_name)
-
     if not os.path.exists(index_path):
         return f"Error: FAISS index not found for collection '{collection_name}'."
-
     try:
-        # Load the vector store
         vectorstore = FAISS.load_local(index_path, embeddings, allow_dangerous_deserialization=True)
-
+        docs = []
+        for doc_id in vectorstore.docstore._dict:
+            doc = vectorstore.docstore._dict[doc_id]
+            if hasattr(doc, "page_content") and hasattr(doc, "metadata"):
+                docs.append(doc)
         if is_summary:
-            # For summarization: get the first N chunks in document order
-            docs = []
-            for doc_id in vectorstore.docstore._dict:
-                doc = vectorstore.docstore._dict[doc_id]
-                if hasattr(doc, "page_content") and hasattr(doc, "metadata"):
-                    docs.append(doc)
-            
-            # Sort by chunk_id to maintain document order
             docs.sort(key=lambda x: x.metadata.get("chunk_id", 0))
             selected_docs = docs[:MAX_CHUNKS_SUMMARY]
-            
-            # Format the retrieved documents
-            results = []
-            for i, doc in enumerate(selected_docs):
-                chunk_id = doc.metadata.get("chunk_id", i)
-                source = doc.metadata.get("source", collection_name)
-                results.append(f"## Document Section {i+1}\nSource: {source}, Chunk: {chunk_id}\n\n{doc.page_content}\n")
-            
-            return "\n\n".join(results)
         else:
-            # For eligibility: get all chunks
-            docs = []
-            for doc_id in vectorstore.docstore._dict:
-                doc = vectorstore.docstore._dict[doc_id]
-                if hasattr(doc, "page_content") and hasattr(doc, "metadata"):
-                    docs.append(doc)
-            
-            # Format the retrieved documents
-            results = []
-            for i, doc in enumerate(docs):
-                chunk_id = doc.metadata.get("chunk_id", i)
-                source = doc.metadata.get("source", collection_name)
-                results.append(f"## Document Section {i+1}\nSource: {source}, Chunk: {chunk_id}\n\n{doc.page_content}\n")
-            
-            return "\n\n".join(results)
+            selected_docs = docs
 
+        results = []
+        for i, doc in enumerate(selected_docs):
+            chunk_id = doc.metadata.get("chunk_id", i)
+            source = doc.metadata.get("source", collection_name)
+            results.append(f"## Document Section {i+1}\n**Source:** {source} | **Chunk:** {chunk_id}\n\n{doc.page_content}\n")
+        return "\n\n".join(results)
     except Exception as e:
         import traceback
         print(f"Error retrieving document chunks: {str(e)}")
@@ -141,55 +98,28 @@ async def retrieve_document_chunks(collection_name: str, is_summary: bool = True
 async def semantic_search_retrieval(collection_name: str, query: str, top_k: int = 10) -> str:
     """
     Perform semantic search on document collection and retrieve most relevant chunks.
-    
-    Args:
-        collection_name: The collection to search in
-        query: The search query for semantic matching
-        top_k: Number of top results to retrieve
-        
-    Returns:
-        Formatted text with the most relevant document chunks
     """
-    # Initialize embedding model
     embeddings = HuggingFaceEmbeddings(
         model_name="sentence-transformers/all-MiniLM-L6-v2",
         model_kwargs={'device': 'cpu'}
     )
-
-    # Load FAISS index
     index_path = os.path.join(FAISS_INDEX_FOLDER, collection_name)
-
     if not os.path.exists(index_path):
         return f"Error: FAISS index not found for collection '{collection_name}'."
-
     try:
-        # Load the vector store
         vectorstore = FAISS.load_local(index_path, embeddings, allow_dangerous_deserialization=True)
-        
-        # Set up retriever
         retriever_vectordb = vectorstore.as_retriever(search_kwargs={"k": top_k})
-        
-        # Get all documents to create BM25 retriever
         all_docs = []
         for doc_id in vectorstore.docstore._dict:
             doc = vectorstore.docstore._dict[doc_id]
             if hasattr(doc, "page_content") and hasattr(doc, "metadata"):
-                all_docs.append(Document(
-                    page_content=doc.page_content,
-                    metadata=doc.metadata
-                ))
-        
-        # Create BM25 retriever for keyword-based search
+                all_docs.append(Document(page_content=doc.page_content, metadata=doc.metadata))
         keyword_retriever = BM25Retriever.from_documents(all_docs)
         keyword_retriever.k = top_k
-        
-        # Create ensemble retriever for hybrid search
         ensemble_retriever = EnsembleRetriever(
             retrievers=[retriever_vectordb, keyword_retriever],
-            weights=[0.7, 0.3]  # Prioritize semantic search over keyword matching
+            weights=[0.7, 0.3]
         )
-        
-        # Apply reranking if enabled
         if RERANKING_ENABLED:
             compressor = CohereRerank()
             final_retriever = ContextualCompressionRetriever(
@@ -198,50 +128,49 @@ async def semantic_search_retrieval(collection_name: str, query: str, top_k: int
             )
         else:
             final_retriever = ensemble_retriever
-        
-        # Get relevant documents
         docs = final_retriever.get_relevant_documents(query)
-        
-        # Format the retrieved documents
         results = []
         for i, doc in enumerate(docs):
             chunk_id = doc.metadata.get("chunk_id", i)
             source = doc.metadata.get("source", collection_name)
-            results.append(f"## Document Section {i+1}\nSource: {source}, Chunk: {chunk_id}\n\n{doc.page_content}\n")
-        
+            results.append(f"## Document Section {i+1}\n**Source:** {source} | **Chunk:** {chunk_id}\n\n{doc.page_content}\n")
         if not results:
             return "No relevant document chunks found."
-        
         return "\n\n".join(results)
-        
     except Exception as e:
         import traceback
         print(f"Error in semantic search: {str(e)}")
         print(traceback.format_exc())
         return f"Error performing semantic search: {str(e)}"
 
+# Dependency models for each agent
 @dataclass
 class SummaryDeps:
-    """Dependencies for the summary agent"""
     collection_name: str
 
 @dataclass
 class EligibilityDeps:
-    """Dependencies for the eligibility agent"""
     collection_name: str
 
-# Initialize agents
+@dataclass
+class SubmissionChecklistDeps:
+    collection_name: str
+
+@dataclass
+class ContractRiskDeps:
+    collection_name: str
+
+# Agent 1: Document Summary
 def create_summary_agent():
-    """Create and configure the document summarization agent"""
     model = GroqModel(
-        'llama-3.1-8b-instant',  # Using smaller model to reduce token usage
+        'llama-3.1-8b-instant',
         provider=GroqProvider(api_key=GROQ_API_KEY)
     )
-    
+    # Added instruction to avoid any tool call formatting in the final answer.
     agent = Agent(
         model,
         system_prompt=(
-            "You are a specialized document summarization assistant. Your task is to generate a comprehensive yet concise "
+              "You are a specialized document summarization assistant. Your task is to generate a comprehensive yet concise "
             "summary of a document. Follow these steps:\n"
             "1. Analyze the document content provided to understand its purpose and structure.\n"
             "2. Extract the core context, scope of work, and key points.\n"
@@ -254,35 +183,22 @@ def create_summary_agent():
             "Your summary should be factual, objective, and based solely on the provided document content."
         )
     )
-    
     @agent.tool
     async def get_document_content(context: RunContext[SummaryDeps]) -> str:
-        """
-        Retrieve ordered document content for summarization (first N chunks).
-        
-        Args:
-            context: The context with collection name.
-            
-        Returns:
-            The document content in original order.
-        """
         collection_name = context.deps.collection_name
-        content = await retrieve_document_chunks(collection_name, is_summary=True)
-        return content
-    
+        return await retrieve_document_chunks(collection_name, is_summary=True)
     return agent
 
+# Agent 2: Eligibility Criteria Extraction
 def create_eligibility_agent():
-    """Create and configure the eligibility criteria extraction agent"""
     model = GroqModel(
-        'llama-3.1-8b-instant',  # Using smaller model to reduce token usage
+        'llama-3.1-8b-instant',
         provider=GroqProvider(api_key=GROQ_API_KEY)
     )
-
     agent = Agent(
         model,
         system_prompt=(
-            "You are a specialized eligibility criteria extraction assistant. Your task is to analyze documents and identify "
+              "You are a specialized eligibility criteria extraction assistant. Your task is to analyze documents and identify "
             "all mandatory eligibility requirements. Follow these steps:\n"
             "1. Carefully review the document content provided.\n"
             "2. Extract and list all mandatory requirements, focusing on:\n"
@@ -296,54 +212,80 @@ def create_eligibility_agent():
             "Focus specifically on requirements using language like 'must have', 'required', 'shall', or 'mandatory'."
         )
     )
-
     @agent.tool
     async def search_document_content(context: RunContext[EligibilityDeps], search_query: str) -> str:
-        """
-        Search the document for specific content related to eligibility criteria.
-        
-        Args:
-            context: The context with collection name.
-            search_query: The specific query to search for in the document.
-            
-        Returns:
-            The relevant document sections matching the search query.
-        """
         collection_name = context.deps.collection_name
-        
-        # Define specific queries for eligibility components
         if not search_query or search_query.strip() == "":
-            # Default query if none provided
-            search_query = "mandatory required must shall eligibility qualifications certifications experience requirements"
-        
-        results = await semantic_search_retrieval(collection_name, search_query, top_k=10)
-        return results
-
+            search_query = "mandatory requirements qualifications certifications experience technical capabilities eligibility"
+        return await semantic_search_retrieval(collection_name, search_query, top_k=10)
     return agent
 
+# Agent 3: Submission Checklist Generation
+def create_submission_checklist_agent():
+    model = GroqModel(
+        'llama-3.1-8b-instant',
+        provider=GroqProvider(api_key=GROQ_API_KEY)
+    )
+    agent = Agent(
+        model,
+        system_prompt=(
+            "You are a specialized assistant for generating a submission checklist. Your task is to extract and structure the RFP submission requirements from a document. "
+            "Follow these steps:\n"
+            "1. Retrieve document sections relevant to submission requirements, including document format details (e.g., page limit, font type/size, line spacing, TOC requirements) and any specific attachments or forms using the provided tool if needed.\n"
+            "2. Organize the extracted information into a structured checklist.\n"
+            "3. Present your output under the top-level heading **Generating a Submission Checklist** with clear markdown headings and bullet points.\n"
+            "IMPORTANT: Do not include any function call syntax or tool formatting in your final response."
+        )
+    )
+    @agent.tool
+    async def search_document_content(context: RunContext[SubmissionChecklistDeps], search_query: str) -> str:
+        collection_name = context.deps.collection_name
+        if not search_query or search_query.strip() == "":
+            search_query = "submission checklist document format page limit font type line spacing attachments forms TOC requirements"
+        return await semantic_search_retrieval(collection_name, search_query, top_k=10)
+    return agent
+
+# Agent 4: Contract Risk Analysis
+def create_contract_risk_agent():
+    model = GroqModel(
+        'llama-3.1-8b-instant',
+        provider=GroqProvider(api_key=GROQ_API_KEY)
+    )
+    agent = Agent(
+        model,
+        system_prompt=(
+            "You are a specialized contract risk analysis assistant. Your task is to analyze contract documents to identify clauses that could put the Company at a disadvantage. "
+            "Follow these steps:\n"
+            "1. Retrieve document sections that discuss contract terms, focusing on potential risks such as unilateral termination rights or other one-sided clauses using the provided tool if needed.\n"
+            "2. Identify biased or risky clauses.\n"
+            "3. Suggest modifications to balance the contract terms (for example, adding a notice period for termination).\n"
+            "4. Present your output under the top-level heading **Analyzing Contract Risks** with clear markdown headings for both risks and recommendations.\n"
+            "IMPORTANT: Do not include any function call syntax or tool formatting in your final response."
+        )
+    )
+    @agent.tool
+    async def search_document_content(context: RunContext[ContractRiskDeps], search_query: str) -> str:
+        collection_name = context.deps.collection_name
+        if not search_query or search_query.strip() == "":
+            search_query = "contract risk analysis biased clauses unilateral termination rights modifications notice period"
+        return await semantic_search_retrieval(collection_name, search_query, top_k=10)
+    return agent
+
+# Run functions for each agent
 async def run_summary_agent(collection_name: str) -> str:
-    """
-    Run the summary agent on the specified collection.
-    """
     print(f"Generating summary for document collection: {collection_name}")
-    
     agent = create_summary_agent()
     deps = SummaryDeps(collection_name=collection_name)
-    
-    # Optimized prompt template for summarization
     summarization_prompt = (
         "Please provide a comprehensive summary of the document. First, retrieve the document content using the get_document_content tool, "
         "then analyze it to extract the overall context, scope of work, key points, and document type. "
-        "Structure your response clearly with appropriate headings for each section."
+        "Structure your response under the heading **Document Summary** with clear markdown formatting."
     )
-    
     try:
         response = await agent.run(summarization_prompt, deps=deps)
-        
         print("\n==== Document Summary ====")
-        print(response.content)
-        
-        return response.content
+        print(response.data)
+        return response.data
     except Exception as e:
         import traceback
         print(f"Error running summary agent: {str(e)}")
@@ -351,42 +293,19 @@ async def run_summary_agent(collection_name: str) -> str:
         return f"Error generating summary: {str(e)}"
 
 async def run_eligibility_agent(collection_name: str) -> str:
-    """
-    Run the eligibility agent on the specified collection with semantic search capabilities.
-    """
     print(f"\nExtracting eligibility criteria for document collection: {collection_name}")
-
     agent = create_eligibility_agent()
     deps = EligibilityDeps(collection_name=collection_name)
-
-    # Optimized prompt template for eligibility criteria extraction with semantic search
     eligibility_prompt = (
-        "You need to extract all mandatory eligibility criteria from the document. Follow these steps:\n\n"
-        
-        "1. First, use the search_document_content tool to search for 'mandatory requirements qualifications certifications' to find the most relevant sections.\n\n"
-        
-        "2. Then, search specifically for 'experience requirements technical capabilities' to find additional criteria.\n\n"
-        
-        "3. If needed, search for 'eligibility criteria must shall necessary' to find any additional requirements.\n\n"
-        
-        "4. Provide a structured analysis of all mandatory eligibility requirements, organizing them into categories:\n"
-        "   - Mandatory requirements\n"
-        "   - Required qualifications\n"
-        "   - Required certifications\n"
-        "   - Minimum experience\n"
-        "   - Technical capabilities\n\n"
-        
-        "5. Also identify any missing or ambiguous eligibility criteria and provide a recommendation about the strictness of the requirements.\n\n"
-        
-        "Focus specifically on requirements using language like 'must have', 'required', 'shall', or 'mandatory'."
+        "Extract all mandatory eligibility criteria from the document. First, retrieve the relevant sections using the search tool, "
+        "then analyze them to summarize must-have qualifications, certifications, and experience needed to bid. "
+        "Flag any missing requirements to prevent wasted effort on non-eligible proposals. "
+        "Present your output under the heading **Extracting Mandatory Eligibility Criteria** using structured markdown."
     )
-
     try:
         response = await agent.run(eligibility_prompt, deps=deps)
-        
-        print("\n==== Eligibility Criteria ====")
+        print("\n==== Extracting Mandatory Eligibility Criteria ====")
         print(response.data)
-        
         return response.data
     except Exception as e:
         import traceback
@@ -394,31 +313,59 @@ async def run_eligibility_agent(collection_name: str) -> str:
         print(traceback.format_exc())
         return f"Error extracting eligibility criteria: {str(e)}"
 
+async def run_submission_checklist_agent(collection_name: str) -> str:
+    print(f"\nGenerating submission checklist for document collection: {collection_name}")
+    agent = create_submission_checklist_agent()
+    deps = SubmissionChecklistDeps(collection_name=collection_name)
+    submission_prompt = (
+        "Generate a submission checklist based on the document content. First, retrieve the sections related to document format and required attachments/forms using the search tool, "
+        "then organize the information into a clear, structured checklist. "
+        "Present your output under the heading **Generating a Submission Checklist** with clear markdown formatting."
+    )
+    try:
+        response = await agent.run(submission_prompt, deps=deps)
+        print("\n==== Generating a Submission Checklist ====")
+        print(response.data)
+        return response.data
+    except Exception as e:
+        import traceback
+        print(f"Error running submission checklist agent: {str(e)}")
+        print(traceback.format_exc())
+        return f"Error generating submission checklist: {str(e)}"
+
+async def run_contract_risk_agent(collection_name: str) -> str:
+    print(f"\nAnalyzing contract risks for document collection: {collection_name}")
+    agent = create_contract_risk_agent()
+    deps = ContractRiskDeps(collection_name=collection_name)
+    contract_risk_prompt = (
+        "Analyze the contract document to identify clauses that could put the Company at a disadvantage. First, retrieve the sections discussing contract terms using the search tool, "
+        "then identify any biased or risky clauses and suggest modifications (for example, adding a notice period for termination). "
+        "Present your output under the heading **Analyzing Contract Risks** with clear markdown headings for risks and recommendations."
+    )
+    try:
+        response = await agent.run(contract_risk_prompt, deps=deps)
+        print("\n==== Analyzing Contract Risks ====")
+        print(response.data)
+        return response.data
+    except Exception as e:
+        import traceback
+        print(f"Error running contract risk agent: {str(e)}")
+        print(traceback.format_exc())
+        return f"Error analyzing contract risks: {str(e)}"
+
 async def list_available_collections() -> List[str]:
-    """List all available document collections."""
     if not os.path.exists(FAISS_INDEX_FOLDER):
         return []
-    
-    return [
-        d for d in os.listdir(FAISS_INDEX_FOLDER)
-        if os.path.isdir(os.path.join(FAISS_INDEX_FOLDER, d))
-    ]
+    return [d for d in os.listdir(FAISS_INDEX_FOLDER) if os.path.isdir(os.path.join(FAISS_INDEX_FOLDER, d))]
 
 async def main_async():
-    """Main async function to run the RAG application"""
-    # Check for available collections
     collections = await list_available_collections()
-    
     if not collections:
         print("No document collections available. Please run rag_pipeline.py first to process documents.")
         return
-    
-    # List available collections
     print("Available document collections:")
     for i, collection in enumerate(collections):
         print(f"{i+1}. {collection}")
-    
-    # Select collection
     collection_idx = input("\nSelect collection number: ")
     try:
         idx = int(collection_idx) - 1
@@ -430,24 +377,25 @@ async def main_async():
     except ValueError:
         print("Invalid input. Please enter a number.")
         return
-    
     print(f"\nSelected collection: {collection_name}")
-    
-    # Select action
     print("\nSelect an action:")
     print("1. Generate Document Summary")
     print("2. Extract Eligibility Criteria")
-    action = input("Enter your choice (1 or 2): ")
-    
+    print("3. Generate Submission Checklist")
+    print("4. Analyze Contract Risks")
+    action = input("Enter your choice (1-4): ")
     if action == "1":
         await run_summary_agent(collection_name)
     elif action == "2":
         await run_eligibility_agent(collection_name)
+    elif action == "3":
+        await run_submission_checklist_agent(collection_name)
+    elif action == "4":
+        await run_contract_risk_agent(collection_name)
     else:
-        print("Invalid action. Please enter 1 or 2.")
+        print("Invalid action. Please enter a number between 1 and 4.")
 
 def main():
-    """Entry point for the script"""
     asyncio.run(main_async())
 
 if __name__ == "__main__":
