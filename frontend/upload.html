@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload Documents</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            background:
+                radial-gradient(ellipse at 20% 20%, rgba(59, 130, 246, 0.1) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 80%, rgba(139, 92, 246, 0.1) 0%, transparent 50%),
+                radial-gradient(ellipse at bottom, #1B2735 0%, #090A0F 100%);
+            color: white;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            min-height: 100vh;
+        }
+        .upload-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 80vh;
+        }
+        .upload-box {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            text-align: center;
+        }
+        .upload-box h2 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+        .upload-box p {
+            font-size: 1.25rem;
+            margin-bottom: 2rem;
+        }
+        .file-input {
+            display: none;
+        }
+        .upload-button {
+            background: linear-gradient(135deg, #3B82F6, #8B5CF6);
+            color: white;
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            font-size: 1.25rem;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+        .upload-button:hover {
+            background: linear-gradient(135deg, #2563EB, #7C3AED);
+        }
+    </style>
+</head>
+<body>
+    <div class="upload-container">
+        <div class="upload-box">
+            <h2>Upload Your Documents</h2>
+            <p>Please upload your RFP and company documents for analysis.</p>
+            <form id="uploadForm">
+                <label for="rfpFile" class="upload-button mb-4">
+                    <i class="fas fa-file-upload mr-2"></i> Upload RFP Document
+                    <input type="file" id="rfpFile" name="rfpFile" class="file-input" accept=".pdf,.doc,.docx">
+                </label>
+                <br>
+                <label for="companyFile" class="upload-button">
+                    <i class="fas fa-file-upload mr-2"></i> Upload Company Document
+                    <input type="file" id="companyFile" name="companyFile" class="file-input" accept=".pdf,.doc,.docx,.xls,.xlsx">
+                </label>
+                <br>
+                <button type="submit" class="upload-button mt-4">
+                    <i class="fas fa-paper-plane mr-2"></i> Submit
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('uploadForm').addEventListener('submit', async function(event) {
+            event.preventDefault();
+
+            const rfpFile = document.getElementById('rfpFile').files[0];
+            const companyFile = document.getElementById('companyFile').files[0];
+
+            if (!rfpFile || !companyFile) {
+                alert('Please upload both RFP and Company documents.');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('rfpFile', rfpFile);
+            formData.append('companyFile', companyFile);
+
+            try {
+                const response = await fetch('http://localhost:5000/analyze', {
+                    method: 'POST',
+                    body: formData,
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    alert(`Error: ${error.error}`);
+                    return;
+                }
+
+                const result = await response.json();
+                console.log('Analysis Result:', result.analysis);
+
+                // Redirect to results page or display the result
+                localStorage.setItem('analysisResult', JSON.stringify(result.analysis));
+                window.location.href = 'results.html';
+            } catch (error) {
+                console.error('Error uploading files:', error);
+                alert('An error occurred while uploading the files.');
+            }
+        });
+    </script>
+</body>
+</html>

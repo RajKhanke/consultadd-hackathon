@@ -131,8 +131,8 @@ async def run_agent(query: str, collection_name: str):
     response = await agent.run(query, deps=deps)
     
     print("\n==== Response ====")
-    print(response)
-    print(type(response))
+    print(response.data)
+    print(type(response.data))
 
 
 async def main_async():

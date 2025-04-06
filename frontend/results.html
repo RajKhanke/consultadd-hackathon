@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RFP Analysis Results</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Cosmic theme matching dashboard */
+        body {
+            background: 
+                radial-gradient(ellipse at 20% 20%, rgba(59, 130, 246, 0.1) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 80%, rgba(139, 92, 246, 0.1) 0%, transparent 50%),
+                radial-gradient(ellipse at bottom, #1B2735 0%, #090A0F 100%);
+            color: white;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            min-height: 100vh;
+        }
+
+        /* Animated gradient header */
+        .header-gradient {
+            background: linear-gradient(135deg, #3B82F6, #8B5CF6, #EC4899);
+            background-size: 300% 300%;
+            animation: gradientBG 15s ease infinite;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* Background pattern matching dashboard */
+        .bg-pattern {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            opacity: 0.1;
+            background-image: 
+                radial-gradient(circle at 25% 25%, #3B82F6 0%, transparent 20%),
+                radial-gradient(circle at 75% 75%, #8B5CF6 0%, transparent 20%);
+            background-size: 300px 300px;
+            animation: patternMove 60s linear infinite;
+            z-index: -1;
+        }
+        
+        @keyframes patternMove {
+            0% { background-position: 0 0, 0 0; }
+            100% { background-position: 300px 300px, -300px -300px; }
+        }
+
+        /* Navigation */
+        .nav-header {
+            background: rgba(0, 0, 0, 0.9);
+            backdrop-filter: blur(12px);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Back button */
+        .back-button {
+            transition: all 0.3s ease;
+        }
+        .back-button:hover {
+            transform: translateX(-5px);
+        }
+
+        /* Uploaded files display */
+        .uploaded-files {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+        .file-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding: 1rem;
+            background: rgba(59, 130, 246, 0.1);
+            border-radius: 12px;
+            transition: all 0.3s ease;
+        }
+        .file-item:hover {
+            background: rgba(59, 130, 246, 0.2);
+        }
+        .file-icon {
+            margin-right: 1.25rem;
+            color: #3B82F6;
+            font-size: 1.75rem;
+            flex-shrink: 0;
+        }
+        .file-details {
+            flex-grow: 1;
+            min-width: 0;
+        }
+        .file-name {
+            font-weight: 600;
+            color: white;
+            font-size: 1.1rem;
+            margin-bottom: 0.25rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .file-size {
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        /* Analysis cards */
+        .analysis-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 20px;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            cursor: pointer;
+            overflow: hidden;
+            position: relative;
+        }
+        .analysis-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(
+                to bottom right,
+                rgba(59, 130, 246, 0) 0%,
+                rgba(59, 130, 246, 0.1) 50%,
+                rgba(59, 130, 246, 0) 100%
+            );
+            transform: rotate(30deg);
+            animation: shine 6s infinite linear;
+        }
+        @keyframes shine {
+            0% { transform: rotate(30deg) translate(-30%, -30%); }
+            100% { transform: rotate(30deg) translate(30%, 30%); }
+        }
+        .analysis-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(59, 130, 246, 0.3);
+        }
+        .analysis-card.active {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 30px rgba(59, 130, 246, 0.5);
+            z-index: 10;
+        }
+        .card-content {
+            max-height: 0;
+            opacity: 0;
+            overflow: hidden;
+            transition: all 0.5s ease;
+        }
+        .analysis-card.active .card-content {
+            max-height: 1000px;
+            opacity: 1;
+            padding-top: 1.25rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Custom cursor elements -->
+<div class="cursor"></div>
+<div class="cursor-inner"></div>
+<div class="cursor-trail"></div>
+    <!-- Background pattern -->
+    <div class="bg-pattern"></div>
+
+    <!-- Navigation -->
+    <header class="fixed w-full z-50 nav-header py-6 shadow-xl">
+        <div class="container mx-auto px-6 flex justify-between items-center">
+            <div class="text-3xl font-bold text-blue-400 flex items-center">
+                <i class="fas fa-robot mr-3 text-4xl"></i>
+                <span>RFP AI</span>
+            </div>
+            <nav class="hidden lg:flex space-x-10">
+                <a href="dashboard.html#features" class="text-xl text-white hover:text-blue-400 transition">Features</a>
+                <a href="dashboard.html#analyze" class="text-xl text-white hover:text-blue-400 transition">Analyze</a>
+                <a href="dashboard.html#dashboard" class="text-xl text-white hover:text-blue-400 transition">Dashboard</a>
+                <a href="dashboard.html#analytics" class="text-xl text-white hover:text-blue-400 transition">Analytics</a>
+                <a href="results.html" class="text-xl text-blue-400 font-semibold">Results</a>
+            </nav>
+            <button class="lg:hidden text-white text-3xl" id="mobileMenuBtn">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Mobile Menu -->
+    <div id="mobileMenu" class="hidden fixed inset-0 z-40 bg-black bg-opacity-90 backdrop-filter backdrop-blur-lg pt-24">
+        <div class="container mx-auto px-6 flex flex-col space-y-8 text-center">
+            <a href="dashboard.html#features" class="text-2xl text-white hover:text-blue-400 transition py-4">Features</a>
+            <a href="dashboard.html#analyze" class="text-2xl text-white hover:text-blue-400 transition py-4">Analyze</a>
+            <a href="dashboard.html#dashboard" class="text-2xl text-white hover:text-blue-400 transition py-4">Dashboard</a>
+            <a href="dashboard.html#analytics" class="text-2xl text-white hover:text-blue-400 transition py-4">Analytics</a>
+            <a href="results.html" class="text-2xl text-blue-400 font-semibold py-4">Results</a>
+            <button class="absolute top-6 right-6 text-white text-3xl" id="closeMenuBtn">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Header with back button -->
+    <section class="header-gradient text-white pt-32 pb-16 shadow-xl">
+        <div class="container mx-auto px-6">
+            <div class="flex items-center mb-6">
+                <a href="dashboard.html" class="back-button text-white hover:text-blue-200 mr-4 flex items-center">
+                    <i class="fas fa-arrow-left text-2xl mr-2"></i>
+                    <span class="text-xl">Back to Dashboard</span>
+                </a>
+            </div>
+            <div class="text-center">
+                <h1 class="text-4xl md:text-5xl font-bold mb-6">RFP Analysis Results</h1>
+                <p class="text-xl md:text-2xl max-w-3xl mx-auto">Comprehensive breakdown of your document analysis</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-6 py-16">
+        <div class="max-w-4xl mx-auto">
+            <!-- Uploaded Files Section -->
+            <div class="uploaded-files">
+                <h2 class="text-2xl md:text-3xl font-bold text-blue-400 mb-4">
+                    <i class="fas fa-file-upload mr-3"></i> Uploaded Documents
+                </h2>
+                <div id="uploadedFilesList" class="mt-4">
+                    <!-- Files will be displayed here by JavaScript -->
+                </div>
+                <p class="text-gray-400 text-sm mt-4" id="uploadTimestamp"></p>
+            </div>
+
+            <!-- Analysis Cards -->
+            <div class="space-y-6 mt-8">
+                <!-- Standard Compliance Checks -->
+                <div class="analysis-card p-6" onclick="toggleCard(this)">
+                    <div class="flex justify-between items-center">
+                        <h2 class="text-2xl font-bold text-blue-400">
+                            <i class="fas fa-check-circle mr-3"></i> Standard Compliance Checks
+                        </h2>
+                        <i class="fas fa-chevron-down text-blue-400 transition-transform duration-300"></i>
+                    </div>
+                    <div class="card-content">
+                        <div class="mt-4 space-y-4">
+                            <div class="flex items-start">
+                                <i class="fas fa-check text-green-400 mt-1 mr-3"></i>
+                                <div>
+                                    <h3 class="text-xl font-semibold mb-3">ISO 9001 Certification</h3>
+                                    <p class="text-gray-300">Verified and up-to-date</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start">
+                                <i class="fas fa-check text-green-400 mt-1 mr-3"></i>
+                                <div>
+                                    <h3 class="text-xl font-semibold mb-3">Data Protection Compliance</h3>
+                                    <p class="text-gray-300">GDPR requirements fully met</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start">
+                                <i class="fas fa-exclamation-triangle text-yellow-400 mt-1 mr-3"></i>
+                                <div>
+                                    <h3 class="text-xl font-semibold mb-3">Accessibility Standards</h3>
+                                    <p class="text-gray-300">WCAG 2.1 AA - 3 minor issues detected</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Mandatory Eligibility Criteria -->
+                <div class="analysis-card p-6" onclick="toggleCard(this)">
+                    <div class="flex justify-between items-center">
+                        <h2 class="text-2xl font-bold text-blue-400">
+                            <i class="fas fa-clipboard-check mr-3"></i> Mandatory Eligibility Criteria
+                        </h2>
+                        <i class="fas fa-chevron-down text-blue-400 transition-transform duration-300"></i>
+                    </div>
+                    <div class="card-content">
+                        <div class="mt-4 space-y-4">
+                            <div class="flex items-start">
+                                <i class="fas fa-check text-green-400 mt-1 mr-3"></i>
+                                <div>
+                                    <h3 class="text-xl font-semibold mb-3">Business Registration</h3>
+                                    <p class="text-gray-300">Properly documented in all required jurisdictions</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start">
+                                <i class="fas fa-check text-green-400 mt-1 mr-3"></i>
+                                <div>
+                                    <h3 class="text-xl font-semibold mb-3">Financial Stability</h3>
+                                    <p class="text-gray-300">Audited financials meet requirements</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start">
+                                <i class="fas fa-times text-red-400 mt-1 mr-3"></i>
+                                <div>
+                                    <h3 class="text-xl font-semibold mb-3">Security Clearance</h3>
+                                    <p class="text-gray-300">DoD Secret clearance not yet obtained</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Submission Checklist -->
+                <div class="analysis-card p-6" onclick="toggleCard(this)">
+                    <div class="flex justify-between items-center">
+                        <h2 class="text-2xl font-bold text-blue-400">
+                            <i class="fas fa-tasks mr-3"></i> Submission Checklist
+                        </h2>
+                        <i class="fas fa-chevron-down text-blue-400 transition-transform duration-300"></i>
+                    </div>
+                    <div class="card-content">
+                        <div class="mt-4 space-y-4">
+                            <div class="flex items-start">
+                                <i class="fas fa-check text-green-400 mt-1 mr-3"></i>
+                                <div>
+                                    <h3 class="text-xl font-semibold mb-3">Technical Proposal</h3>
+                                    <p class="text-gray-300">Complete and properly formatted</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start">
+                                <i class="fas fa-check text-green-400 mt-1 mr-3"></i>
+                                <div>
+                                    <h3 class="text-xl font-semibold mb-3">Financial Proposal</h3>
+                                    <p class="text-gray-300">All cost elements included</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start">
+                                <i class="fas fa-exclamation-triangle text-yellow-400 mt-1 mr-3"></i>
+                                <div>
+                                    <h3 class="text-xl font-semibold mb-3">Executive Summary</h3>
+                                    <p class="text-gray-300">Missing 2 required signatures</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Contract Risks -->
+                <div class="analysis-card p-6" onclick="toggleCard(this)">
+                    <div class="flex justify-between items-center">
+                        <h2 class="text-2xl font-bold text-blue-400">
+                            <i class="fas fa-exclamation-triangle mr-3"></i> Contract Risks
+                        </h2>
+                        <i class="fas fa-chevron-down text-blue-400 transition-transform duration-300"></i>
+                    </div>
+                    <div class="card-content">
+                        <div class="mt-4 space-y-4">
+                            <div class="flex items-start">
+                                <i class="fas fa-shield-alt text-blue-400 mt-1 mr-3"></i>
+                                <div>
+                                    <h3 class="text-xl font-semibold mb-3">Liability Clauses</h3>
+                                    <p class="text-gray-300">Standard terms acceptable</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start">
+                                <i class="fas fa-exclamation text-yellow-400 mt-1 mr-3"></i>
+                                <div>
+                                    <h3 class="text-xl font-semibold mb-3">Payment Terms</h3>
+                                    <p class="text-gray-300">60-day payment period may impact cash flow</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start">
+                                <i class="fas fa-radiation text-red-400 mt-1 mr-3"></i>
+                                <div>
+                                    <h3 class="text-xl font-semibold mb-3">Termination Conditions</h3>
+                                    <p class="text-gray-300">Unilateral termination clause requires negotiation</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Summary -->
+                <div class="analysis-card p-6" onclick="toggleCard(this)">
+                    <div class="flex justify-between items-center">
+                        <h2 class="text-2xl font-bold text-blue-400">
+                            <i class="fas fa-chart-pie mr-3"></i> Summary
+                        </h2>
+                        <i class="fas fa-chevron-down text-blue-400 transition-transform duration-300"></i>
+                    </div>
+                    <div class="card-content">
+                        <div class="mt-4 grid md:grid-cols-2 gap-6">
+                            <div class="bg-gray-800 bg-opacity-50 p-4 rounded-lg">
+                                <h3 class="text-lg font-semibold mb-2">Compliance Score</h3>
+                                <div class="flex items-center">
+                                    <div class="text-4xl font-bold text-green-400 mr-4">87%</div>
+                                    <div class="w-full bg-gray-700 rounded-full h-4">
+                                        <div class="bg-green-500 h-4 rounded-full" style="width: 87%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="bg-gray-800 bg-opacity-50 p-4 rounded-lg">
+                                <h3 class="text-lg font-semibold mb-2">Risk Level</h3>
+                                <div class="flex items-center">
+                                    <div class="text-4xl font-bold text-yellow-400 mr-4">Medium</div>
+                                    <div class="w-full bg-gray-700 rounded-full h-4">
+                                        <div class="bg-yellow-500 h-4 rounded-full" style="width: 65%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="md:col-span-2 bg-gray-800 bg-opacity-50 p-4 rounded-lg">
+                                <h3 class="text-lg font-semibold mb-2">Recommendations</h3>
+                                <ul class="space-y-2">
+                                    <li class="flex items-start">
+                                        <i class="fas fa-arrow-circle-right text-blue-400 mt-1 mr-2"></i>
+                                        <span>Obtain security clearance within 60 days</span>
+                                    </li>
+                                    <li class="flex items-start">
+                                        <i class="fas fa-arrow-circle-right text-blue-400 mt-1 mr-2"></i>
+                                        <span>Negotiate payment terms to 30 days</span>
+                                    </li>
+                                    <li class="flex items-start">
+                                        <i class="fas fa-arrow-circle-right text-blue-400 mt-1 mr-2"></i>
+                                        <span>Complete executive summary signatures</span>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="resultsContainer" class="text-white text-lg"></div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-black bg-opacity-80 py-12">
+        <div class="container mx-auto px-6">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-12">
+                <div>
+                    <h3 class="text-2xl font-bold text-blue-400 mb-6 flex items-center">
+                        <i class="fas fa-robot mr-3"></i> RFP AI
+                    </h3>
+                    <p class="text-gray-400 mb-6">
+                        AI-powered government contract analysis and compliance.
+                    </p>
+                    <div class="flex space-x-6">
+                        <a href="#" class="text-2xl text-gray-400 hover:text-blue-400 transition"><i class="fab fa-twitter"></i></a>
+                        <a href="#" class="text-2xl text-gray-400 hover:text-blue-400 transition"><i class="fab fa-linkedin"></i></a>
+                        <a href="#" class="text-2xl text-gray-400 hover:text-blue-400 transition"><i class="fab fa-github"></i></a>
+                    </div>
+                </div>
+                
+                <div>
+                    <h3 class="text-xl font-bold mb-6 text-white">Product</h3>
+                    <ul class="space-y-3">
+                        <li><a href="dashboard.html#features" class="text-gray-400 hover:text-white transition">Features</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition">Pricing</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition">Demo</a></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h3 class="text-xl font-bold mb-6 text-white">Resources</h3>
+                    <ul class="space-y-3">
+                        <li><a href="#" class="text-gray-400 hover:text-white transition">Documentation</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition">Blog</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition">Support</a></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h3 class="text-xl font-bold mb-6 text-white">Company</h3>
+                    <ul class="space-y-3">
+                        <li><a href="#" class="text-gray-400 hover:text-white transition">About</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition">Careers</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition">Contact</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="border-t border-gray-800 mt-12 pt-8 text-center">
+                <p class="text-gray-500">&copy; 2023 RFP AI. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Mobile menu toggle
+        document.getElementById('mobileMenuBtn').addEventListener('click', function() {
+            document.getElementById('mobileMenu').classList.remove('hidden');
+        });
+
+        document.getElementById('closeMenuBtn').addEventListener('click', function() {
+            document.getElementById('mobileMenu').classList.add('hidden');
+        });
+
+        // Display uploaded files on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            const fileInfo = JSON.parse(localStorage.getItem('uploadedFiles'));
+            const filesList = document.getElementById('uploadedFilesList');
+            const timestamp = document.getElementById('uploadTimestamp');
+            
+            if (fileInfo) {
+                filesList.innerHTML = '';
+                
+                // Display RFP file
+                const rfpItem = document.createElement('div');
+                rfpItem.className = 'file-item';
+                rfpItem.innerHTML = `
+                    <i class="fas fa-file-contract file-icon"></i>
+                    <div class="file-details">
+                        <div class="file-name">RFP Document: ${fileInfo.rfpFileName}</div>
+                        <div class="file-size">${fileInfo.rfpFileSize}</div>
+                    </div>
+                `;
+                filesList.appendChild(rfpItem);
+                
+                // Display Company file
+                const companyItem = document.createElement('div');
+                companyItem.className = 'file-item';
+                companyItem.innerHTML = `
+                    <i class="fas fa-building file-icon"></i>
+                    <div class="file-details">
+                        <div class="file-name">Company Document: ${fileInfo.companyFileName}</div>
+                        <div class="file-size">${fileInfo.companyFileSize}</div>
+                    </div>
+                `;
+                filesList.appendChild(companyItem);
+                
+                // Display timestamp
+                timestamp.textContent = `Analyzed on: ${fileInfo.timestamp}`;
+            } else {
+                filesList.innerHTML = '<p class="text-gray-400">No upload information available. Please upload files from the dashboard.</p>';
+            }
+        });
+
+        // Card toggle functionality
+        function toggleCard(card) {
+            const isActive = card.classList.contains('active');
+            
+            // Close all cards first
+            document.querySelectorAll('.analysis-card').forEach(c => {
+                c.classList.remove('active');
+                c.querySelector('.fa-chevron-down').classList.remove('rotate-180');
+            });
+            
+            // If clicked card wasn't active, open it
+            if (!isActive) {
+                card.classList.add('active');
+                card.querySelector('.fa-chevron-down').classList.add('rotate-180');
+                
+                // Scroll to the card with offset for header
+                setTimeout(() => {
+                    const headerOffset = 100;
+                    const elementPosition = card.getBoundingClientRect().top;
+                    const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+                    
+                    window.scrollTo({
+                        top: offsetPosition,
+                        behavior: 'smooth'
+                    });
+                }, 100);
+            }
+        }
+    </script>
+    <script>
+        // Custom cursor animation (same as dashboard.html)
+        const cursor = document.querySelector('.cursor');
+        const cursorInner = document.querySelector('.cursor-inner');
+        const cursorTrail = document.querySelector('.cursor-trail');
+        
+        let mouseX = 0;
+        let mouseY = 0;
+        let trailX = 0;
+        let trailY = 0;
+        let scale = 1;
+        let color = '#3B82F6';
+        
+        document.addEventListener('mousemove', (e) => {
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+            
+            cursor.style.transform = `translate(${mouseX}px, ${mouseY}px) scale(${scale})`;
+            cursorInner.style.transform = `translate(${mouseX}px, ${mouseY}px)`;
+        });
+        
+        function animateCursor() {
+            trailX += (mouseX - trailX) * 0.1;
+            trailY += (mouseY - trailY) * 0.1;
+            
+            cursorTrail.style.transform = `translate(${trailX}px, ${trailY}px)`;
+            
+            const hue = (parseInt(color.slice(-6), 16) + 1000) % 0xFFFFFF;
+            color = `#${hue.toString(16).padStart(6, '0')}`;
+            cursor.style.borderColor = `${color}cc`;
+            cursorTrail.style.borderColor = `${color}88`;
+            
+            requestAnimationFrame(animateCursor);
+        }
+        
+        animateCursor();
+        
+        // Cursor hover effects
+        document.querySelectorAll('button, a, input, .analysis-card').forEach(el => {
+            el.addEventListener('mouseenter', () => {
+                cursor.style.width = '60px';
+                cursor.style.height = '60px';
+                cursorInner.style.backgroundColor = 'rgba(255, 255, 255, 1)';
+                scale = 1.5;
+            });
+            
+            el.addEventListener('mouseleave', () => {
+                cursor.style.width = '40px';
+                cursor.style.height = '40px';
+                cursorInner.style.backgroundColor = 'rgba(255, 255, 255, 0.9)';
+                scale = 1;
+            });
+        });
+    </script>
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const analysisResult = JSON.parse(localStorage.getItem('analysisResult'));
+        const resultsContainer = document.getElementById('resultsContainer');
+
+        if (analysisResult) {
+            resultsContainer.textContent = analysisResult;
+        } else {
+            resultsContainer.textContent = 'No analysis result available. Please upload files for analysis.';
+        }
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RFP AI | Government Contract Analysis</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* Cosmic theme with animated elements */
+        body {
+            background: 
+                radial-gradient(ellipse at 20% 20%, rgba(59, 130, 246, 0.1) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 80%, rgba(139, 92, 246, 0.1) 0%, transparent 50%),
+                radial-gradient(ellipse at bottom, #1B2735 0%, #090A0F 100%);
+            color: white;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            overflow-x: hidden;
+        }
+        
+        /* Animated gradient header with pattern */
+        .hero-gradient {
+            background: 
+                linear-gradient(135deg, #3B82F6, #8B5CF6, #EC4899),
+                url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M50 50c0-5.523-4.477-10-10-10s-10 4.477-10 10 4.477 10 10 10 10-4.477 10-10' fill='%23ffffff' fill-opacity='0.05' fill-rule='evenodd'/%3E%3C/svg%3E");
+            background-size: 300% 300%, 60px 60px;
+            animation: gradientBG 15s ease infinite;
+        }
+        
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%, 0 0; }
+            50% { background-position: 100% 50%, 30px 30px; }
+            100% { background-position: 0% 50%, 0 0; }
+        }
+        
+        /* Advanced cursor animation */
+        .cursor {
+            position: fixed;
+            width: 40px;
+            height: 40px;
+            border: 2px solid rgba(59, 130, 246, 0.8);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 9999;
+            transform: translate(-50%, -50%);
+            transition: 
+                transform 0.15s ease, 
+                width 0.3s ease, 
+                height 0.3s ease,
+                border-color 0.3s ease;
+            mix-blend-mode: difference;
+        }
+        
+        .cursor-inner {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            transition: background 0.3s ease;
+        }
+        
+        .cursor-trail {
+            position: fixed;
+            width: 20px;
+            height: 20px;
+            border: 1px solid rgba(59, 130, 246, 0.5);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 9998;
+            transform: translate(-50%, -50%);
+            transition: 
+                transform 0.3s ease, 
+                opacity 0.3s ease,
+                width 0.3s ease,
+                height 0.3s ease;
+        }
+        
+        /* Mega typography */
+        .hero-title {
+            font-size: 5.5rem;
+            line-height: 1;
+            text-shadow: 0 0 20px rgba(59, 130, 246, 0.7);
+        }
+        
+        .section-title {
+            font-size: 4rem;
+            line-height: 1.2;
+        }
+        
+        .card-title {
+            font-size: 2.5rem;
+            line-height: 1.3;
+        }
+        
+        .body-text {
+            font-size: 1.5rem;
+            line-height: 1.6;
+        }
+        
+        /* Holographic components with animation */
+        .holographic-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 24px;
+            box-shadow: 0 0 40px rgba(59, 130, 246, 0.3);
+            transition: all 0.4s ease;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .holographic-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(
+                to bottom right,
+                rgba(59, 130, 246, 0) 0%,
+                rgba(59, 130, 246, 0.1) 50%,
+                rgba(59, 130, 246, 0) 100%
+            );
+            transform: rotate(30deg);
+            animation: shine 6s infinite linear;
+        }
+        
+        @keyframes shine {
+            0% { transform: rotate(30deg) translate(-30%, -30%); }
+            100% { transform: rotate(30deg) translate(30%, 30%); }
+        }
+        
+        .holographic-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 0 60px rgba(59, 130, 246, 0.5);
+        }
+        
+        /* Dashboard components with toggle animations */
+        .dashboard-tab {
+            padding: 1.5rem 2rem;
+            font-size: 1.5rem;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .dashboard-tab::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: #3B82F6;
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform 0.3s ease;
+        }
+        
+        .dashboard-tab.active::after {
+            transform: scaleX(1);
+        }
+        
+        .dashboard-content {
+            min-height: 500px;
+        }
+        
+        /* Tab content animations */
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.5s ease-out forwards;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        /* Chart containers */
+        .chart-container {
+            height: 400px;
+            position: relative;
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 1024px) {
+            .hero-title { font-size: 4rem; }
+            .section-title { font-size: 3rem; }
+        }
+        
+        @media (max-width: 768px) {
+            .hero-title { font-size: 3rem; }
+            .section-title { font-size: 2.5rem; }
+            .card-title { font-size: 2rem; }
+            .body-text { font-size: 1.25rem; }
+        }
+        
+        /* Background patterns */
+        .bg-pattern {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            opacity: 0.1;
+            background-image: 
+                radial-gradient(circle at 25% 25%, #3B82F6 0%, transparent 20%),
+                radial-gradient(circle at 75% 75%, #8B5CF6 0%, transparent 20%);
+            background-size: 300px 300px;
+            animation: patternMove 60s linear infinite;
+            z-index: -1;
+        }
+        
+        @keyframes patternMove {
+            0% { background-position: 0 0, 0 0; }
+            100% { background-position: 300px 300px, -300px -300px; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Background pattern -->
+    <div class="bg-pattern"></div>
+    
+    <!-- Custom cursor elements -->
+    <div class="cursor"></div>
+    <div class="cursor-inner"></div>
+    <div class="cursor-trail"></div>
+
+    <!-- Navigation - Larger Size -->
+    <header class="fixed w-full z-50 bg-black bg-opacity-90 backdrop-filter backdrop-blur-lg py-6 shadow-xl">
+        <div class="container mx-auto px-6 flex justify-between items-center">
+            <div class="text-3xl font-bold text-blue-400 flex items-center">
+                <i class="fas fa-robot mr-3 text-4xl"></i>
+                <span>RFP AI</span>
+            </div>
+            <nav class="hidden lg:flex space-x-10">
+                <a href="#features" class="text-xl text-white hover:text-blue-400 transition">Features</a>
+                <a href="#analyze" class="text-xl text-white hover:text-blue-400 transition">Analyze</a>
+                <a href="#dashboard" class="text-xl text-white hover:text-blue-400 transition">Dashboard</a>
+                <a href="#analytics" class="text-xl text-white hover:text-blue-400 transition">Analytics</a>
+                <a href="results.html" class="text-xl text-white hover:text-blue-400 transition">Results</a>
+            </nav>
+            <button class="lg:hidden text-white text-3xl">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Hero Section - Larger Text with Enhanced Background -->
+    <section class="hero-gradient min-h-screen flex items-center justify-center pt-24 relative overflow-hidden">
+        <div class="container mx-auto px-6 text-center py-20 relative z-10">
+            <h1 class="hero-title font-bold mb-6">
+                AUTOMATED<br>
+                <span class="text-blue-100">RFP ANALYSIS</span>
+            </h1>
+            <p class="body-text max-w-4xl mx-auto mb-16">
+                Revolutionizing government contract bidding with AI-powered compliance verification<br>
+                and predictive risk assessment
+            </p>
+            <div class="flex flex-col sm:flex-row justify-center gap-8">
+                <button class="bg-white text-blue-600 hover:bg-gray-100 font-bold py-5 px-12 rounded-full text-xl transition-all transform hover:scale-105 shadow-2xl">
+                    <i class="fas fa-play-circle mr-3"></i> LIVE DEMO
+                </button>
+                <button class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-5 px-12 rounded-full text-xl transition-all transform hover:scale-105 shadow-2xl">
+                    <i class="fas fa-rocket mr-3"></i> GET STARTED
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="py-24 relative">
+        <div class="container mx-auto px-6">
+            <div class="text-center mb-20">
+                <h2 class="section-title font-bold mb-6">KEY FEATURES</h2>
+                <p class="body-text max-w-4xl mx-auto">
+                    Our AI-powered platform delivers comprehensive analysis for government contracts
+                </p>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                <div class="holographic-card p-8">
+                    <div class="text-blue-400 mb-6 text-5xl">
+                        <i class="fas fa-check-double"></i>
+                    </div>
+                    <h3 class="card-title font-bold mb-4">Compliance Verification</h3>
+                    <p class="body-text">
+                        Automated validation against all government requirements with 99.9% accuracy
+                    </p>
+                </div>
+                <div class="holographic-card p-8">
+                    <div class="text-blue-400 mb-6 text-5xl">
+                        <i class="fas fa-brain"></i>
+                    </div>
+                    <h3 class="card-title font-bold mb-4">Predictive Analysis</h3>
+                    <p class="body-text">
+                        Machine learning models forecast your success probability
+                    </p>
+                </div>
+                <div class="holographic-card p-8">
+                    <div class="text-blue-400 mb-6 text-5xl">
+                        <i class="fas fa-shield-halved"></i>
+                    </div>
+                    <h3 class="card-title font-bold mb-4">Risk Assessment</h3>
+                    <p class="body-text">
+                        Identifies 23 types of contract risks with mitigation strategies
+                    </p>
+                </div>
+                <div class="holographic-card p-8">
+                    <div class="text-blue-400 mb-6 text-5xl">
+                        <i class="fas fa-bolt"></i>
+                    </div>
+                    <h3 class="card-title font-bold mb-4">Instant Processing</h3>
+                    <p class="body-text">
+                        200-page RFPs analyzed in under 10 seconds
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Analyze Section -->
+    <section id="analyze" class="py-24 bg-gray-900 bg-opacity-50 relative">
+        <div class="container mx-auto px-6">
+            <div class="text-center mb-20">
+                <h2 class="section-title font-bold mb-6">ANALYZE YOUR RFP</h2>
+                <p class="body-text max-w-4xl mx-auto">
+                    Upload your documents for immediate AI-powered analysis
+                </p>
+            </div>
+            
+            <form id="uploadForm" class="max-w-4xl mx-auto holographic-card p-12">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-12 mb-12">
+                    <!-- RFP Upload Section -->
+                    <div id="rfpUpload" class="border-dashed border-4 border-blue-400 border-opacity-50 p-12 rounded-2xl text-center cursor-pointer transition-all hover:border-opacity-100 hover:bg-blue-400 hover:bg-opacity-10">
+                        <i class="fas fa-file-contract text-6xl text-blue-400 mb-6"></i>
+                        <p class="text-2xl font-semibold mb-4">Drag & Drop RFP</p>
+                        <p class="body-text mb-6">or</p>
+                        <label for="rfpFile" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-8 rounded-lg transition cursor-pointer">
+                            Browse Files
+                        </label>
+                        <input type="file" id="rfpFile" name="rfpFile" class="hidden" accept=".pdf,.doc,.docx">
+                        <div id="rfpFileName" class="mt-6 text-blue-400 font-medium hidden"></div>
+                    </div>
+                    
+                    <!-- Company Upload Section -->
+                    <div id="companyUpload" class="border-dashed border-4 border-blue-400 border-opacity-50 p-12 rounded-2xl text-center cursor-pointer transition-all hover:border-opacity-100 hover:bg-blue-400 hover:bg-opacity-10">
+                        <i class="fas fa-building text-6xl text-blue-400 mb-6"></i>
+                        <p class="text-2xl font-semibold mb-4">Drag & Drop Company Info</p>
+                        <p class="body-text mb-6">or</p>
+                        <label for="companyFile" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-8 rounded-lg transition cursor-pointer">
+                            Browse Files
+                        </label>
+                        <input type="file" id="companyFile" name="companyFile" class="hidden" accept=".pdf,.doc,.docx,.xls,.xlsx">
+                        <div id="companyFileName" class="mt-6 text-blue-400 font-medium hidden"></div>
+                    </div>
+                </div>
+                
+                <div class="text-center">
+                    <button type="submit" class="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-bold py-4 px-16 rounded-full text-xl transition-all transform hover:scale-105 shadow-xl">
+                        <i class="fas fa-search mr-2"></i> ANALYZE DOCUMENTS
+                    </button>
+                </div>
+            </form>
+        </div>
+    </section>
+
+    <!-- Compliance Dashboard - With Toggle Animations -->
+    <section id="dashboard" class="py-24 relative">
+        <div class="container mx-auto px-6">
+            <div class="text-center mb-20">
+                <h2 class="section-title font-bold mb-6">COMPLIANCE DASHBOARD</h2>
+                <p class="body-text max-w-4xl mx-auto">
+                    Comprehensive analysis of all compliance components
+                </p>
+            </div>
+            
+            <div class="holographic-card max-w-6xl mx-auto overflow-hidden">
+                <!-- Tabs with Toggles -->
+                <div class="flex border-b border-gray-700">
+                    <div class="dashboard-tab active flex items-center" data-tab="eligibility">
+                        <label class="relative inline-flex items-center cursor-pointer mr-4">
+                            <input type="checkbox" checked class="sr-only peer">
+                            <div class="w-14 h-7 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-7 peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-blue-500"></div>
+                        </label>
+                        <button class="text-xl font-semibold text-blue-400">
+                            <i class="fas fa-clipboard-check mr-2"></i> Eligibility
+                        </button>
+                    </div>
+                    
+                    <div class="dashboard-tab flex items-center" data-tab="requirements">
+                        <label class="relative inline-flex items-center cursor-pointer mr-4">
+                            <input type="checkbox" class="sr-only peer">
+                            <div class="w-14 h-7 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-7 peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-blue-500"></div>
+                        </label>
+                        <button class="text-xl font-semibold text-gray-400 hover:text-blue-400">
+                            <i class="fas fa-tasks mr-2"></i> Requirements
+                        </button>
+                    </div>
+                    
+                    <div class="dashboard-tab flex items-center" data-tab="submission">
+                        <label class="relative inline-flex items-center cursor-pointer mr-4">
+                            <input type="checkbox" class="sr-only peer">
+                            <div class="w-14 h-7 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-7 peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-blue-500"></div>
+                        </label>
+                        <button class="text-xl font-semibold text-gray-400 hover:text-blue-400">
+                            <i class="fas fa-paper-plane mr-2"></i> Submission
+                        </button>
+                    </div>
+                    
+                    <div class="dashboard-tab flex items-center" data-tab="risks">
+                        <label class="relative inline-flex items-center cursor-pointer mr-4">
+                            <input type="checkbox" class="sr-only peer">
+                            <div class="w-14 h-7 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-7 peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-blue-500"></div>
+                        </label>
+                        <button class="text-xl font-semibold text-gray-400 hover:text-blue-400">
+                            <i class="fas fa-radiation mr-2"></i> Risks
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Tab Contents -->
+                <div class="dashboard-content p-10">
+                    <!-- Eligibility Tab -->
+                    <div id="eligibility" class="tab-content active">
+                        <h3 class="text-3xl font-bold mb-8 text-blue-400">Eligibility Features</h3>
+                        <ul class="space-y-8">
+                            <li class="flex items-start">
+                                <i class="fas fa-check-circle text-3xl text-green-400 mr-6 mt-1"></i>
+                                <div>
+                                    <p class="text-2xl font-semibold mb-3">Automated Verification</p>
+                                    <p class="body-text">Instant validation against all government eligibility criteria with detailed compliance reports.</p>
+                                </div>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fas fa-certificate text-3xl text-blue-400 mr-6 mt-1"></i>
+                                <div>
+                                    <p class="text-2xl font-semibold mb-3">Certification Tracking</p>
+                                    <p class="body-text">Centralized management of all required certifications with automated renewal alerts.</p>
+                                </div>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fas fa-history text-3xl text-purple-400 mr-6 mt-1"></i>
+                                <div>
+                                    <p class="text-2xl font-semibold mb-3">Historical Performance</p>
+                                    <p class="body-text">Comprehensive analysis of past projects against current requirements.</p>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                    
+                    <!-- Requirements Tab -->
+                    <div id="requirements" class="tab-content">
+                        <h3 class="text-3xl font-bold mb-8 text-blue-400">Requirements Features</h3>
+                        <ul class="space-y-8">
+                            <li class="flex items-start">
+                                <i class="fas fa-list-check text-3xl text-green-400 mr-6 mt-1"></i>
+                                <div>
+                                    <p class="text-2xl font-semibold mb-3">Comprehensive Checklist</p>
+                                    <p class="body-text">Detailed breakdown of all technical and operational requirements with completion tracking.</p>
+                                </div>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fas fa-gauge-high text-3xl text-blue-400 mr-6 mt-1"></i>
+                                <div>
+                                    <p class="text-2xl font-semibold mb-3">Capability Scoring</p>
+                                    <p class="body-text">Quantitative assessment of your ability to meet each requirement with improvement suggestions.</p>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                    
+                    <!-- Submission Tab -->
+                    <div id="submission" class="tab-content">
+                        <h3 class="text-3xl font-bold mb-8 text-blue-400">Submission Features</h3>
+                        <ul class="space-y-8">
+                            <li class="flex items-start">
+                                <i class="fas fa-file-circle-check text-3xl text-green-400 mr-6 mt-1"></i>
+                                <div>
+                                    <p class="text-2xl font-semibold mb-3">Document Validation</p>
+                                    <p class="body-text">Automated verification of all submission documents against formatting and content requirements.</p>
+                                </div>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fas fa-calendar-check text-3xl text-blue-400 mr-6 mt-1"></i>
+                                <div>
+                                    <p class="text-2xl font-semibold mb-3">Timeline Management</p>
+                                    <p class="body-text">Automated tracking of all submission deadlines with milestone reminders.</p>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                    
+                    <!-- Risks Tab -->
+                    <div id="risks" class="tab-content">
+                        <h3 class="text-3xl font-bold mb-8 text-blue-400">Risk Features</h3>
+                        <ul class="space-y-8">
+                            <li class="flex items-start">
+                                <i class="fas fa-triangle-exclamation text-3xl text-yellow-400 mr-6 mt-1"></i>
+                                <div>
+                                    <p class="text-2xl font-semibold mb-3">Contract Risk Scoring</p>
+                                    <p class="body-text">Comprehensive evaluation of 23 different risk factors with weighted importance scoring.</p>
+                                </div>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fas fa-handshake-angle text-3xl text-blue-400 mr-6 mt-1"></i>
+                                <div>
+                                    <p class="text-2xl font-semibold mb-3">Term Analysis</p>
+                                    <p class="body-text">Detailed review of contract terms with identification of potentially unfavorable clauses.</p>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Analytics Section with Charts -->
+    <section id="analytics" class="py-24 bg-gray-900 bg-opacity-50 relative">
+        <div class="container mx-auto px-6">
+            <div class="text-center mb-20">
+                <h2 class="section-title font-bold mb-6">PERFORMANCE ANALYTICS</h2>
+                <p class="body-text max-w-4xl mx-auto">
+                    Data-driven insights into your contract bidding performance
+                </p>
+            </div>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 max-w-6xl mx-auto">
+                <div class="holographic-card p-8">
+                    <h3 class="text-2xl font-bold mb-6 text-center text-blue-400">Bid Success Rate</h3>
+                    <div class="chart-container">
+                        <canvas id="successChart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="holographic-card p-8">
+                    <h3 class="text-2xl font-bold mb-6 text-center text-blue-400">Compliance Factors</h3>
+                    <div class="chart-container">
+                        <canvas id="complianceChart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="holographic-card p-8 lg:col-span-2">
+                    <h3 class="text-2xl font-bold mb-6 text-center text-blue-400">Quarterly Performance Trends</h3>
+                    <div class="chart-container" style="height: 350px;">
+                        <canvas id="trendChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-black bg-opacity-80 py-16">
+        <div class="container mx-auto px-6">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-12">
+                <div>
+                    <h3 class="text-2xl font-bold text-blue-400 mb-6 flex items-center">
+                        <i class="fas fa-robot mr-3"></i> RFP AI
+                    </h3>
+                    <p class="body-text mb-6">
+                        AI-powered government contract analysis and compliance.
+                    </p>
+                    <div class="flex space-x-6">
+                        <a href="#" class="text-2xl text-gray-400 hover:text-blue-400 transition"><i class="fab fa-twitter"></i></a>
+                        <a href="#" class="text-2xl text-gray-400 hover:text-blue-400 transition"><i class="fab fa-linkedin"></i></a>
+                        <a href="#" class="text-2xl text-gray-400 hover:text-blue-400 transition"><i class="fab fa-github"></i></a>
+                    </div>
+                </div>
+                
+                <div>
+                    <h3 class="text-xl font-bold mb-6">Product</h3>
+                    <ul class="space-y-3">
+                        <li><a href="#" class="body-text text-gray-400 hover:text-white transition">Features</a></li>
+                        <li><a href="#" class="body-text text-gray-400 hover:text-white transition">Pricing</a></li>
+                        <li><a href="#" class="body-text text-gray-400 hover:text-white transition">Demo</a></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h3 class="text-xl font-bold mb-6">Resources</h3>
+                    <ul class="space-y-3">
+                        <li><a href="#" class="body-text text-gray-400 hover:text-white transition">Documentation</a></li>
+                        <li><a href="#" class="body-text text-gray-400 hover:text-white transition">Blog</a></li>
+                        <li><a href="#" class="body-text text-gray-400 hover:text-white transition">Support</a></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h3 class="text-xl font-bold mb-6">Company</h3>
+                    <ul class="space-y-3">
+                        <li><a href="#" class="body-text text-gray-400 hover:text-white transition">About</a></li>
+                        <li><a href="#" class="body-text text-gray-400 hover:text-white transition">Careers</a></li>
+                        <li><a href="#" class="body-text text-gray-400 hover:text-white transition">Contact</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="border-t border-gray-800 mt-12 pt-8 text-center">
+                <p class="body-text text-gray-500">&copy; 2023 RFP AI. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Initialize charts
+        function initCharts() {
+            const successCtx = document.getElementById('successChart').getContext('2d');
+            new Chart(successCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Won (45%)', 'Lost (30%)', 'Pending (25%)'],
+                    datasets: [{
+                        data: [45, 30, 25],
+                        backgroundColor: ['rgba(16, 185, 129, 0.8)', 'rgba(239, 68, 68, 0.8)', 'rgba(245, 158, 11, 0.8)'],
+                        borderColor: ['rgba(16, 185, 129, 1)', 'rgba(239, 68, 68, 1)', 'rgba(245, 158, 11, 1)'],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                font: { size: 14 },
+                                color: 'white'
+                            }
+                        }
+                    },
+                    cutout: '65%'
+                }
+            });
+    
+            const complianceCtx = document.getElementById('complianceChart').getContext('2d');
+            new Chart(complianceCtx, {
+                type: 'polarArea',
+                data: {
+                    labels: ['Eligibility', 'Requirements', 'Submission', 'Risk'],
+                    datasets: [{
+                        data: [35, 25, 20, 20],
+                        backgroundColor: ['rgba(59, 130, 246, 0.7)', 'rgba(16, 185, 129, 0.7)', 'rgba(245, 158, 11, 0.7)', 'rgba(239, 68, 68, 0.7)'],
+                        borderColor: ['rgba(59, 130, 246, 1)', 'rgba(16, 185, 129, 1)', 'rgba(245, 158, 11, 1)', 'rgba(239, 68, 68, 1)'],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { font: { size: 14 }, color: 'white' }
+                        }
+                    },
+                    scales: {
+                        r: {
+                            grid: { color: 'rgba(255, 255, 255, 0.2)' },
+                            angleLines: { color: 'rgba(255, 255, 255, 0.2)' },
+                            pointLabels: { color: 'white', font: { size: 14 } },
+                            ticks: { display: false, backdropColor: 'transparent' }
+                        }
+                    }
+                }
+            });
+    
+            const trendCtx = document.getElementById('trendChart').getContext('2d');
+            new Chart(trendCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Q1', 'Q2', 'Q3', 'Q4'],
+                    datasets: [
+                        {
+                            label: 'Bids Submitted',
+                            data: [12, 19, 15, 8],
+                            borderColor: 'rgba(59, 130, 246, 1)',
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            borderWidth: 3,
+                            tension: 0.3,
+                            fill: true
+                        },
+                        {
+                            label: 'Bids Won',
+                            data: [5, 8, 6, 4],
+                            borderColor: 'rgba(16, 185, 129, 1)',
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            borderWidth: 3,
+                            tension: 0.3,
+                            fill: true
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: { font: { size: 14 }, color: 'white' }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                            ticks: { color: 'white', font: { size: 14 } }
+                        },
+                        y: {
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                            ticks: { color: 'white', font: { size: 14 } },
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+    
+        // Other functions (initTabs, initCursor, initFileUploads, initForm) go here...
+    
+        document.addEventListener('DOMContentLoaded', function () {
+            initCharts();
+            initTabs();
+            initCursor();
+            initFileUploads();
+            initForm();
+    
+            if ('ontouchstart' in window) {
+                document.querySelector('.cursor').style.display = 'none';
+                document.querySelector('.cursor-inner').style.display = 'none';
+                document.querySelector('.cursor-trail').style.display = 'none';
+            }
+        });
+    </script>
+    </body>
+</html>
