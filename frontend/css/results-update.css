@@ -1,7 +1,11 @@
 /* Additional CSS for results display */
 
-.summary-content {
-    background-color: black(255, 255, 255, 0.9);
+.summary-content,
+.eligibility-content,
+.compliance-content,
+.checklist-content,
+.risks-content {
+    background-color: black;
     border-radius: 8px;
     padding: 20px;
     margin-top: 20px;
@@ -11,28 +15,56 @@
 
 .summary-content h1,
 .summary-content h2,
-.summary-content h3 {
+.summary-content h3,
+.eligibility-content h1,
+.eligibility-content h2,
+.eligibility-content h3,
+.compliance-content h1,
+.compliance-content h2,
+.compliance-content h3,
+.checklist-content h1,
+.checklist-content h2,
+.checklist-content h3,
+.risks-content h1,
+.risks-content h2,
+.risks-content h3 {
     color: #333;
     margin-top: 20px;
     margin-bottom: 10px;
 }
 
-.summary-content strong {
+.summary-content strong,
+.eligibility-content strong,
+.compliance-content strong,
+.checklist-content strong,
+.risks-content strong {
     color: #4338ca;
 }
 
 .summary-content ul,
-.summary-content ol {
+.summary-content ol,
+.eligibility-content ul,
+.eligibility-content ol,
+.compliance-content ul,
+.compliance-content ol,
+.checklist-content ul,
+.checklist-content ol,
+.risks-content ul,
+.risks-content ol {
     margin-left: 20px;
     margin-bottom: 15px;
 }
 
-.summary-content li {
+.summary-content li,
+.eligibility-content li,
+.compliance-content li,
+.checklist-content li,
+.risks-content li {
     margin-bottom: 5px;
 }
 
 .placeholder-content {
-    background-color: rgba(255, 255, 255, 0.7);
+    background-color: black;
     border-radius: 8px;
     padding: 20px;
     margin-top: 20px;
@@ -42,7 +74,7 @@
 }
 
 .error-message {
-    background-color: rgba(254, 226, 226, 0.7);
+    background-color: black;
     border-radius: 8px;
     padding: 20px;
     margin-top: 20px;
@@ -52,7 +84,7 @@
 
 .retry-btn {
     background-color: #4f46e5;
-    color: black;
+    color: white;
     border: none;
     border-radius: 4px;
     padding: 8px 16px;
@@ -65,3 +97,168 @@
     background-color: #4338ca;
 }
 
+/* Compliance specific styles */
+.criteria-details {
+    margin-top: 24px;
+}
+
+.section-heading {
+    font-size: 1.1rem;
+    color: white;
+    margin-top: 20px;
+    margin-bottom: 12px;
+    border-bottom: 1px solid #e5e7eb;
+    padding-bottom: 8px;
+}
+
+.requirements-list {
+    list-style-type: none;
+    padding-left: 0;
+    margin-bottom: 20px;
+}
+
+.requirements-list .requirement {
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: 10px;
+    background-color: black;
+    padding: 10px;
+    border-radius: 4px;
+}
+
+.requirements-list .requirement i {
+    margin-right: 10px;
+    margin-top: 3px;
+}
+
+.requirements-list .requirement.met i {
+    color: #10B981; /* green */
+}
+
+.requirements-list .requirement.unmet i {
+    color: #EF4444; /* red */
+}
+
+.requirements-list .requirement.warning i {
+    color: #F59E0B; /* amber */
+}
+
+.compliance-scores {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin: 24px 0;
+}
+
+.score-card {
+    background-color: black;
+    border-radius: 8px;
+    padding: 16px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    text-align: center;
+}
+
+.score-card h3 {
+    margin-top: 0 !important;
+    font-size: 14px !important;
+    color: #4b5563;
+}
+
+.score-value {
+    font-size: 24px;
+    font-weight: bold;
+    margin: 8px 0;
+}
+
+.score-bar {
+    height: 8px;
+    background-color: #e5e7eb;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-top: 8px;
+}
+
+.score-fill {
+    height: 100%;
+    border-radius: 4px;
+}
+
+.high {
+    background-color: #10B981;
+}
+
+.medium {
+    background-color: #F59E0B;
+}
+
+.low {
+    background-color: #EF4444;
+}
+/* Add these styles to the existing CSS file */
+
+/* Category details */
+.category-details {
+    margin-top: 20px;
+}
+
+.category-card {
+    background-color: black;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 16px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+
+.category-card h4 {
+    font-size: 16px;
+    margin-top: 0;
+    margin-bottom: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.category-card h5 {
+    font-size: 14px;
+    margin-top: 12px;
+    margin-bottom: 8px;
+    color: #4b5563;
+}
+
+.category-score {
+    font-size: 14px;
+    font-weight: bold;
+    padding: 4px 8px;
+    border-radius: 4px;
+}
+
+.category-score.score-high {
+    background-color: rgba(16, 185, 129, 0.1);
+    color: #10B981;
+}
+
+.category-score.score-medium {
+    background-color: rgba(245, 158, 11, 0.1);
+    color: #F59E0B;
+}
+
+.category-score.score-low {
+    background-color: rgba(239, 68, 68, 0.1);
+    color: #EF4444;
+}
+
+.category-card ul {
+    margin-left: 20px;
+    margin-bottom: 12px;
+}
+
+.category-card li {
+    margin-bottom: 4px;
+    font-size: 14px;
+}
+
+.justification {
+    margin-top: 12px;
+    font-size: 14px;
+    color: #4b5563;
+}

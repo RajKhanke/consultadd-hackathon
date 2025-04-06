@@ -7,16 +7,20 @@ from flask_cors import CORS
 # Import necessary functions from agentic_test.py
 sys.path.append('./rag_data')
 try:
-    from agentic_test import retrieve_document_chunks, run_summary_agent
+    from agentic_test import (
+        run_summary_agent, 
+        run_eligibility_agent, 
+        run_submission_checklist_agent, 
+        run_contract_risk_agent,
+        run_compliance_agent,
+        list_available_collections
+    )
 except ImportError as e:
     print(f"Error importing from agentic_test.py: {e}")
     sys.exit(1)
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
-
-# Constants
-FAISS_INDEX_FOLDER = os.path.join(os.path.expanduser("~"), "OneDrive", "Documents", "consultadd", "rag_data", "faiss_indexes")
 
 # Simple dictionary to map RFP numbers to collection names
 RFP_NUMBER_TO_NAME = {
@@ -25,108 +29,44 @@ RFP_NUMBER_TO_NAME = {
     "3": "IN-ELIGIBLE_RFP"
 }
 
+# Constants
+COMPANY_DATA_FILE = os.path.join(os.path.expanduser("~"), "OneDrive", "Documents", "consultadd", "rag_data", "company_data.json")
+
 def get_collection_name(rfp_number):
     """Convert RFP number to collection name"""
-    return RFP_NUMBER_TO_NAME.get(str(rfp_number), rfp_number)
-
-# Custom summary function that directly retrieves document content
-async def generate_document_summary(collection_name):
-    """Generate a document summary directly using the retrieved document chunks"""
-    try:
-        # Get document content
-        print(f"Retrieving document chunks for collection: {collection_name}")
-        doc_content = await retrieve_document_chunks(collection_name, is_summary=True)
-        
-        if "Error" in doc_content:
-            print(f"Error retrieving document chunks: {doc_content}")
-            return f"Error retrieving document content: {doc_content}"
-            
-        # Create a basic summary from the document content
-        # In a production app, you might want to use an LLM here
-        chunks = doc_content.split("## Document Section")
-        
-        # Extract content and metadata
-        document_sections = []
-        document_type = "Request for Proposal (RFP)"  # Default assumption
-        
-        for chunk in chunks[1:]:  # Skip the first empty chunk
-            if "**Source:**" in chunk:
-                # Parse metadata and content
-                lines = chunk.strip().split('\n')
-                metadata_line = next((line for line in lines if "**Source:**" in line), "")
-                content = '\n'.join(lines[2:]) if len(lines) > 2 else ""
-                
-                document_sections.append({
-                    "metadata": metadata_line,
-                    "content": content
-                })
-                
-                # Try to identify document type
-                if "RFP" in content or "Request for Proposal" in content:
-                    document_type = "Request for Proposal (RFP)"
-                elif "Contract" in content:
-                    document_type = "Contract"
-        
-        # Extract key information
-        all_content = ' '.join([section['content'] for section in document_sections])
-        
-        # Find potential scope information
-        scope_keywords = ["scope", "services required", "requirements"]
-        scope_lines = []
-        for section in document_sections:
-            lines = section['content'].split('\n')
-            for line in lines:
-                lower_line = line.lower()
-                if any(keyword in lower_line for keyword in scope_keywords) and len(line) < 300:
-                    scope_lines.append(line)
-        
-        scope_of_work = '; '.join(scope_lines[:3])  # First few relevant lines
-        if not scope_of_work:
-            scope_of_work = "Temporary staffing services for various departments"  # Default
-        
-        # Get key points
-        key_points = []
-        keywords = ["must", "required", "shall", "mandatory", "minimum"]
-        
-        for section in document_sections:
-            lines = section['content'].split('\n')
-            for line in lines:
-                lower_line = line.lower()
-                if any(keyword in lower_line for keyword in keywords) and len(line) > 10:
-                    # Clean up the line and add to key points
-                    clean_line = line.strip()
-                    if clean_line not in key_points and len(key_points) < 7:
-                        key_points.append(clean_line)
-        
-        # Format the summary
-        summary = f"""**Document Summary**
-
-**Type:** {document_type}
-**Purpose:** Temporary Staffing Services
-**Scope:** {scope_of_work}
-
-**Key Points:**
-
-{chr(10).join(['* ' + point for point in key_points])}
-
-**Overall Context and Purpose:** MHMR is seeking proposals for temporary staffing services to support its various departments. The RFP outlines the scope of services, requirements, and evaluation process for vendors to submit their proposals. The ultimate goal is to select the best value for MHMR.
-"""
-        
-        return summary
-    
-    except Exception as e:
-        import traceback
-        print(f"Error generating summary: {str(e)}")
-        print(traceback.format_exc())
-        return f"Error generating document summary: {str(e)}"
+    # First check if it's a key in our dictionary
+    collection_name = RFP_NUMBER_TO_NAME.get(str(rfp_number))
+    if collection_name:
+        return collection_name
+    # If not, return the original value (may be a direct collection name)
+    return rfp_number
 
 @app.route('/')
 def index():
     return "RFP Analysis API is running"
 
+@app.route('/api/collections', methods=['GET'])
+def collections():
+    """Endpoint to list available collections"""
+    try:
+        available_collections = asyncio.run(list_available_collections())
+        return jsonify({
+            "status": "success",
+            "collections": available_collections,
+            "mappings": RFP_NUMBER_TO_NAME
+        })
+    except Exception as e:
+        print(f"Error listing collections: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            "status": "error", 
+            "message": str(e)
+        }), 500
+
 @app.route('/api/summarize', methods=['GET'])
 def summarize():
-    """Endpoint to get document summary"""
+    """Endpoint to get document summary using run_summary_agent from agentic_test.py"""
     rfp_number = request.args.get('rfpNumber')
     
     if not rfp_number:
@@ -140,21 +80,8 @@ def summarize():
         collection_name = get_collection_name(rfp_number)
         print(f"Generating summary for collection: {collection_name}")
         
-        # First try with our custom function
-        try:
-            # Use our custom direct summary function
-            summary_result = asyncio.run(generate_document_summary(collection_name))
-            
-            if "Error" in summary_result:
-                # Fall back to the original function if available
-                print("Custom summary failed, trying original function")
-                fallback_result = asyncio.run(run_summary_agent(collection_name))
-                if "Error" not in fallback_result and "I don't have" not in fallback_result:
-                    summary_result = fallback_result
-        except Exception as custom_error:
-            print(f"Custom summary function error: {str(custom_error)}")
-            # Fall back to the original function
-            summary_result = asyncio.run(run_summary_agent(collection_name))
+        # Call run_summary_agent directly
+        summary_result = asyncio.run(run_summary_agent(collection_name))
         
         return jsonify({
             "status": "success",
@@ -168,6 +95,163 @@ def summarize():
             "status": "error", 
             "message": str(e)
         }), 500
+
+@app.route('/api/eligibility', methods=['GET'])
+def eligibility():
+    """Endpoint to get eligibility criteria using run_eligibility_agent from agentic_test.py"""
+    rfp_number = request.args.get('rfpNumber')
+    
+    if not rfp_number:
+        return jsonify({
+            "status": "error", 
+            "message": "RFP number is required"
+        }), 400
+    
+    try:
+        # Convert RFP number to collection name
+        collection_name = get_collection_name(rfp_number)
+        print(f"Extracting eligibility criteria for collection: {collection_name}")
+        
+        # Call run_eligibility_agent directly
+        eligibility_result = asyncio.run(run_eligibility_agent(collection_name))
+        
+        return jsonify({
+            "status": "success",
+            "data": eligibility_result
+        })
+    except Exception as e:
+        print(f"Error extracting eligibility criteria: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            "status": "error", 
+            "message": str(e)
+        }), 500
+
+@app.route('/api/checklist', methods=['GET'])
+def checklist():
+    """Endpoint to get submission checklist using run_submission_checklist_agent from agentic_test.py"""
+    rfp_number = request.args.get('rfpNumber')
+    
+    if not rfp_number:
+        return jsonify({
+            "status": "error", 
+            "message": "RFP number is required"
+        }), 400
+    
+    try:
+        # Convert RFP number to collection name
+        collection_name = get_collection_name(rfp_number)
+        print(f"Generating submission checklist for collection: {collection_name}")
+        
+        # Call run_submission_checklist_agent directly
+        checklist_result = asyncio.run(run_submission_checklist_agent(collection_name))
+        
+        return jsonify({
+            "status": "success",
+            "data": checklist_result
+        })
+    except Exception as e:
+        print(f"Error generating submission checklist: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            "status": "error", 
+            "message": str(e)
+        }), 500
+
+@app.route('/api/risks', methods=['GET'])
+def risks():
+    """Endpoint to get contract risk analysis using run_contract_risk_agent from agentic_test.py"""
+    rfp_number = request.args.get('rfpNumber')
+    
+    if not rfp_number:
+        return jsonify({
+            "status": "error", 
+            "message": "RFP number is required"
+        }), 400
+    
+    try:
+        # Convert RFP number to collection name
+        collection_name = get_collection_name(rfp_number)
+        print(f"Analyzing contract risks for collection: {collection_name}")
+        
+        # Call run_contract_risk_agent directly
+        risks_result = asyncio.run(run_contract_risk_agent(collection_name))
+        
+        return jsonify({
+            "status": "success",
+            "data": risks_result
+        })
+    except Exception as e:
+        print(f"Error analyzing contract risks: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            "status": "error", 
+            "message": str(e)
+        }), 500
+
+@app.route('/api/compliance', methods=['POST'])
+def compliance():
+    """Endpoint to get compliance check results using run_compliance_agent from agentic_test.py"""
+    data = request.json
+    if not data:
+        return jsonify({
+            "status": "error", 
+            "message": "Request body is required"
+        }), 400
+    
+    rfp_number = data.get('rfpNumber')
+
+    # Hardcoded company data file path
+    company_data_file = r"C:\Users\hrite\OneDrive\Documents\consultadd\rag_data\data\Company Data.docx"
+    
+    if not rfp_number:
+        return jsonify({
+            "status": "error", 
+            "message": "RFP number is required"
+        }), 400
+    
+    if not os.path.exists(company_data_file):
+        return jsonify({
+            "status": "error", 
+            "message": f"Company data file not found: {company_data_file}"
+        }), 404
+    
+    try:
+        # Convert RFP number to collection name
+        collection_name = get_collection_name(rfp_number)
+        print(f"Running compliance check for collection: {collection_name} with company data: {company_data_file}")
+        
+        # Call run_compliance_agent directly
+        compliance_result = asyncio.run(run_compliance_agent(collection_name, company_data_file))
+        
+        # Check if the result is already JSON
+        try:
+            import json
+            # Try to parse as JSON
+            json_data = json.loads(compliance_result)
+            return jsonify({
+                "status": "success",
+                "data": json_data
+            })
+        except json.JSONDecodeError:
+            # If not valid JSON, return as string
+            return jsonify({
+                "status": "success",
+                "data": compliance_result
+            })
+        
+    except Exception as e:
+        print(f"Error running compliance check: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            "status": "error", 
+            "message": str(e)
+        }), 500
+
 
 if __name__ == '__main__':
     print("Starting Flask server...")
