@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RFP Analysis Results</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/results.css">
+</head>
+<body>
+    <!-- Custom cursor elements -->
+    <div class="cursor"></div>
+    <div class="cursor-inner"></div>
+    <div class="cursor-trail"></div>
+    
+    <!-- Background pattern -->
+    <div class="bg-pattern"></div>
+
+    <!-- Navigation -->
+    <header class="nav-header">
+        <div class="container">
+            <div class="logo">
+                <i class="fas fa-robot"></i>
+                <span>RFP AI</span>
+            </div>
+            <nav class="main-nav">
+                <a href="index.html#features">Features</a>
+                <a href="index.html#analyze">Analyze</a>
+                <a href="index.html#dashboard">Dashboard</a>
+                <a href="index.html#analytics">Analytics</a>
+                <a href="results.html" class="active">Results</a>
+            </nav>
+            <button class="mobile-menu-btn" id="mobileMenuBtn">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Mobile Menu -->
+    <div id="mobileMenu" class="mobile-menu">
+        <div class="container">
+            <a href="index.html#features">Features</a>
+            <a href="index.html#analyze">Analyze</a>
+            <a href="index.html#analytics">Analytics</a>
+            <a href="results.html" class="active">Results</a>
+            <button class="close-menu-btn" id="closeMenuBtn">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Header with back button -->
+    <section class="header-gradient">
+        <div class="container">
+            <div class="back-button-container">
+                <a href="index.html" class="back-button">
+                    <i class="fas fa-arrow-left"></i>
+                    <span>Back to Dashboard</span>
+                </a>
+            </div>
+            <div class="text-center">
+                <h1 class="page-title">RFP Analysis Results</h1>
+                <p class="page-subtitle">Comprehensive breakdown of your document analysis</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main Content -->
+    <main class="container main-content">
+        <div class="results-container">
+            <!-- Uploaded Files Section -->
+            <div class="uploaded-files">
+                <h2 class="section-heading">
+                    <i class="fas fa-file-upload"></i> Uploaded Documents
+                </h2>
+                <div id="uploadedFilesList" class="files-list">
+                    <!-- Files will be displayed here by JavaScript -->
+                </div>
+                <p class="timestamp" id="uploadTimestamp"></p>
+            </div>
+
+            <!-- Analysis Buttons -->
+            <div class="analysis-buttons" id="analysisButtons">
+                <button class="analysis-btn" data-type="summarize">
+                    <i class="fas fa-chart-pie"></i> Summarize
+                </button>
+                <button class="analysis-btn" data-type="compliance">
+                    <i class="fas fa-check-circle"></i> Standard Compliance Check
+                </button>
+                <button class="analysis-btn" data-type="eligibility">
+                    <i class="fas fa-clipboard-check"></i> Mandatory Eligibility Criteria
+                </button>
+                <button class="analysis-btn" data-type="checklist">
+                    <i class="fas fa-tasks"></i> Submission Checklist
+                </button>
+                <button class="analysis-btn" data-type="risks">
+                    <i class="fas fa-exclamation-triangle"></i> Contract Risks
+                </button>
+            </div>
+
+            <!-- Results Display Area -->
+            <div id="resultsDisplay" class="results-display">
+                <!-- Results will be displayed here by JavaScript -->
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-col">
+                    <h3 class="footer-logo">
+                        <i class="fas fa-robot"></i> RFP AI
+                    </h3>
+                    <p class="footer-text">
+                        AI-powered government contract analysis and compliance.
+                    </p>
+                    <div class="social-links">
+                        <a href="#"><i class="fab fa-twitter"></i></a>
+                        <a href="#"><i class="fab fa-linkedin"></i></a>
+                        <a href="#"><i class="fab fa-github"></i></a>
+                    </div>
+                </div>
+                
+                <div class="footer-col">
+                    <h3 class="footer-title">Product</h3>
+                    <ul class="footer-links">
+                        <li><a href="index.html#features">Features</a></li>
+                        <li><a href="#">Pricing</a></li>
+                        <li><a href="#">Demo</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-col">
+                    <h3 class="footer-title">Resources</h3>
+                    <ul class="footer-links">
+                        <li><a href="#">Documentation</a></li>
+                        <li><a href="#">Blog</a></li>
+                        <li><a href="#">Support</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-col">
+                    <h3 class="footer-title">Company</h3>
+                    <ul class="footer-links">
+                        <li><a href="#">About</a></li>
+                        <li><a href="#">Careers</a></li>
+                        <li><a href="#">Contact</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p>&copy; 2023 RFP AI. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/main.js"></script>
+    <script src="js/results.js"></script>
+    <script src="js/api.js"></script>
+</body>
+</html>
+
