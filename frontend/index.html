@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RFP AI | Government Contract Analysis</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+</head>
+<body>
+    <!-- Background pattern -->
+    <div class="bg-pattern"></div>
+    
+    <!-- Custom cursor elements -->
+    <div class="cursor"></div>
+    <div class="cursor-inner"></div>
+    <div class="cursor-trail"></div>
+
+    <!-- Navigation -->
+    <header class="nav-header">
+        <div class="container">
+            <div class="logo">
+                <i class="fas fa-robot"></i>
+                <span>RFP AI</span>
+            </div>
+            <nav class="main-nav">
+                <a href="#features">Features</a>
+                <a href="#analyze">Analyze</a>
+                <a href="#analytics">Analytics</a>
+                <a href="results.html">Results</a>
+            </nav>
+            <button class="mobile-menu-btn" id="mobileMenuBtn">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Mobile Menu -->
+    <div id="mobileMenu" class="mobile-menu">
+        <div class="container">
+            <a href="#features">Features</a>
+            <a href="#analyze">Analyze</a>
+            <a href="#dashboard">Dashboard</a>
+            <a href="#analytics">Analytics</a>
+            <a href="results.html">Results</a>
+            <button class="close-menu-btn" id="closeMenuBtn">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Hero Section -->
+    <section class="hero-gradient">
+        <div class="container text-center">
+            <h1 class="hero-title">
+                AUTOMATED<br>
+                <span>RFP ANALYSIS</span>
+            </h1>
+            <p class="body-text">
+                Revolutionizing government contract bidding with AI-powered compliance verification<br>
+                and predictive risk assessment
+            </p>
+            <div class="hero-buttons">
+                <button class="btn btn-white">
+                    <i class="fas fa-play-circle"></i> LIVE DEMO
+                </button>
+                <button class="btn btn-blue">
+                    <i class="fas fa-rocket"></i> GET STARTED
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="section">
+        <div class="container">
+            <div class="text-center section-header">
+                <h2 class="section-title">KEY FEATURES</h2>
+                <p class="body-text">
+                    Our AI-powered platform delivers comprehensive analysis for government contracts
+                </p>
+            </div>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-check-double"></i>
+                    </div>
+                    <h3 class="card-title">Compliance Verification</h3>
+                    <p class="body-text">
+                        Automated validation against all government requirements with 99.9% accuracy
+                    </p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-brain"></i>
+                    </div>
+                    <h3 class="card-title">Predictive Analysis</h3>
+                    <p class="body-text">
+                        Machine learning models forecast your success probability
+                    </p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-shield-halved"></i>
+                    </div>
+                    <h3 class="card-title">Risk Assessment</h3>
+                    <p class="body-text">
+                        Identifies 23 types of contract risks with mitigation strategies
+                    </p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-bolt"></i>
+                    </div>
+                    <h3 class="card-title">Instant Processing</h3>
+                    <p class="body-text">
+                        200-page RFPs analyzed in under 10 seconds
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Analyze Section -->
+    <section id="analyze" class="section section-dark">
+        <div class="container">
+            <div class="text-center section-header">
+                <h2 class="section-title">ANALYZE YOUR RFP</h2>
+                <p class="body-text">
+                    Upload your documents for immediate AI-powered analysis
+                </p>
+            </div>
+            
+            <form id="uploadForm" class="upload-form">
+                <div class="upload-grid">
+                    <!-- RFP Upload Section -->
+                    <div id="rfpUpload" class="upload-box">
+                        <i class="fas fa-file-contract"></i>
+                        <p class="upload-title">Drag & Drop RFP</p>
+                        <p class="upload-or">or</p>
+                        <label for="rfpFile" class="upload-label">
+                            Browse Files
+                        </label>
+                        <input type="file" id="rfpFile" name="rfpFile" class="file-input" accept=".pdf,.doc,.docx">
+                        <div id="rfpFileName" class="file-name"></div>
+                        
+                        <div class="rfp-selection">
+                            <label for="rfpSelect" class="select-label">Select RFP Number:</label>
+                            <select id="rfpSelect" name="rfpSelect" class="rfp-select">
+                                <option value="1">RFP 1</option>
+                                <option value="2">RFP 2</option>
+                                <option value="3">RFP 3</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- Company Upload Section -->
+                    <div id="companyUpload" class="upload-box">
+                        <i class="fas fa-building"></i>
+                        <p class="upload-title">Drag & Drop Company Info</p>
+                        <p class="upload-or">or</p>
+                        <label for="companyFile" class="upload-label">
+                            Browse Files
+                        </label>
+                        <input type="file" id="companyFile" name="companyFile" class="file-input" accept=".pdf,.doc,.docx,.xls,.xlsx">
+                        <div id="companyFileName" class="file-name"></div>
+                    </div>
+                </div>
+                
+                <div class="text-center">
+                    <button type="submit" id="analyzeBtn" class="btn btn-gradient">
+                        <i class="fas fa-search"></i> ANALYZE DOCUMENTS
+                    </button>
+                </div>
+            </form>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-col">
+                    <h3 class="footer-logo">
+                        <i class="fas fa-robot"></i> RFP AI
+                    </h3>
+                    <p class="footer-text">
+                        AI-powered government contract analysis and compliance.
+                    </p>
+                    <div class="social-links">
+                        <a href="#"><i class="fab fa-twitter"></i></a>
+                        <a href="#"><i class="fab fa-linkedin"></i></a>
+                        <a href="#"><i class="fab fa-github"></i></a>
+                    </div>
+                </div>
+                
+                <div class="footer-col">
+                    <h3 class="footer-title">Product</h3>
+                    <ul class="footer-links">
+                        <li><a href="#features">Features</a></li>
+                        <li><a href="#">Pricing</a></li>
+                        <li><a href="#">Demo</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-col">
+                    <h3 class="footer-title">Resources</h3>
+                    <ul class="footer-links">
+                        <li><a href="#">Documentation</a></li>
+                        <li><a href="#">Blog</a></li>
+                        <li><a href="#">Support</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-col">
+                    <h3 class="footer-title">Company</h3>
+                    <ul class="footer-links">
+                        <li><a href="#">About</a></li>
+                        <li><a href="#">Careers</a></li>
+                        <li><a href="#">Contact</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p>&copy; 2023 RFP AI. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/main.js"></script>
+    <script src="js/dashboard.js"></script>
+</body>
+</html>
+
